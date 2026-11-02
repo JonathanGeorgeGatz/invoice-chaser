@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Invoice Chaser — free, offline, yours</title>
+<style>
+:root{--ink:#26222b;--paper:#faf9f6;--panel:#ffffff;--line:#e4e0d8;--plum:#6e3482;--plum-dk:#55276646;
+--sage:#6d8a5b;--amber:#b7791f;--red:#a63a3a;--mut:#6f6a62}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 "Avenir Next","Segoe UI",system-ui,sans-serif}
+header{padding:26px 28px 14px;border-bottom:3px solid var(--plum);background:var(--panel)}
+header h1{margin:0;font-size:26px;letter-spacing:.2px}
+header p{margin:6px 0 0;color:var(--mut);max-width:70ch}
+.badge{display:inline-block;background:#f3ecf7;color:var(--plum);border:1px solid var(--plum);border-radius:4px;
+padding:1px 8px;font-size:12px;margin-left:10px;vertical-align:middle}
+main{max-width:1180px;margin:0 auto;padding:20px 28px 60px}
+h2{font-size:15px;text-transform:uppercase;letter-spacing:.08em;color:var(--plum);margin:28px 0 10px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.cols{grid-template-columns:1fr}}
+textarea{width:100%;min-height:170px;font:12.5px/1.45 ui-monospace,Menlo,Consolas,monospace;border:1px solid var(--line);
+border-radius:6px;padding:10px;background:var(--panel);color:var(--ink);white-space:pre;resize:vertical}
+label{display:block;font-size:12.5px;color:var(--mut);margin-bottom:4px}
+.settings{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;background:var(--panel);border:1px solid var(--line);
+border-radius:8px;padding:14px}
+.settings input{border:1px solid var(--line);border-radius:5px;padding:7px 9px;font:inherit;background:#fff;width:150px}
+.settings .wide input{width:220px}
+button{border:0;border-radius:6px;padding:10px 18px;font:600 14px/1 inherit;cursor:pointer}
+#run{background:var(--plum);color:#fff;font-size:15px;padding:12px 26px}
+#loadSample{background:#efece6;color:var(--ink);border:1px solid var(--line)}
+details.tpl{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin-top:10px}
+details.tpl textarea{min-height:120px}
+#banner{display:none;background:#fbeaea;border:2px solid var(--red);color:var(--red);border-radius:8px;
+padding:14px 16px;font-weight:600;margin:18px 0;white-space:pre-wrap}
+#error{display:none;background:#fff7e8;border:1px solid var(--amber);color:#7a5513;border-radius:8px;padding:10px 14px;margin:14px 0}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:6px}
+@media(max-width:700px){.tiles{grid-template-columns:1fr}}
+.tile{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--plum);border-radius:8px;padding:12px 16px}
+.tile .v{font-size:27px;font-weight:700;letter-spacing:.3px}
+.tile .k{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.07em}
+.tile.ok{border-left-color:var(--sage)}
+.tile.warn{border-left-color:var(--amber)}
+table{border-collapse:collapse;width:100%;background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+th,td{padding:8px 12px;border-bottom:1px solid var(--line);text-align:left;font-size:13.5px}
+th{background:#f4f1ea;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.recline{font-size:13px;color:var(--sage);margin:8px 2px;font-weight:600}
+.tone{display:inline-block;border-radius:999px;padding:1px 10px;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.tone.gentle{background:#eef4ea;color:var(--sage)}
+.tone.firm{background:#fdf3e2;color:var(--amber)}
+.tone.final{background:#fbeaea;color:var(--red)}
+.email{background:var(--panel);border:1px solid var(--line);border-radius:8px;margin:12px 0;padding:14px 16px}
+.email .sub{font-weight:700;margin-bottom:6px}
+.email pre{white-space:pre-wrap;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;background:#faf8f3;border:1px solid var(--line);
+border-radius:6px;padding:10px;margin:8px 0}
+.email .meta{font-size:12.5px;color:var(--mut)}
+.email a.send{display:inline-block;background:var(--sage);color:#fff;border-radius:5px;padding:6px 14px;font-size:13px;
+font-weight:600;text-decoration:none;margin-right:8px}
+.email button.copy{background:#efece6;border:1px solid var(--line);padding:6px 14px;font-size:13px}
+.exc{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:4px 16px 12px;margin-top:8px}
+.exc li{margin:6px 0;font-size:13.5px}
+.exc .why{color:var(--red)}
+footer{border-top:1px solid var(--line);margin-top:48px;padding:18px 28px;color:var(--mut);font-size:13px}
+#results{display:none}
+.fine{color:var(--mut);font-size:12.5px;margin-top:4px}
+</style>
+</head>
+<body>
+<header>
+  <h1>The Invoice Chaser <span class="badge">free · offline · yours</span></h1>
+  <p>Paste the two lists you already keep — invoices out, payments in — and get your real outstanding
+  balance, an honest aging table, and ready-to-send reminder emails in three tones. Nothing leaves this
+  page: no server, no account, no network. Sample books are entirely fictional (every address is
+  @example.com).</p>
+</header>
+<main>
+  <h2>1 · Your books</h2>
+  <div class="cols">
+    <div>
+      <label for="inv">invoices.csv — invoice, client, email, issued, due, amount, status</label>
+      <textarea id="inv" spellcheck="false"></textarea>
+    </div>
+    <div>
+      <label for="pay">payments.csv — date, invoice, client, amount</label>
+      <textarea id="pay" spellcheck="false"></textarea>
+    </div>
+  </div>
+  <p><button id="loadSample">Load the fictional sample books</button></p>
+
+  <h2>2 · Settings</h2>
+  <div class="settings">
+    <div><label for="asof">Books as-of date (required)</label><input id="asof" placeholder="YYYY-MM-DD"></div>
+    <div><label for="grace">Grace days</label><input id="grace" value="0"></div>
+    <div><label for="t1">Gentle up to (days late)</label><input id="t1" value="14"></div>
+    <div><label for="t2">Firm up to (days late)</label><input id="t2" value="45"></div>
+    <div class="wide"><label for="biz">Business name</label><input id="biz" value="Bentwood Joinery"></div>
+    <div class="wide"><label for="reply">Reply-to address</label><input id="reply" value="accounts@example.com"></div>
+  </div>
+  <p class="fine">The as-of date is deliberate: this tool never reads your computer's clock, so the same
+  books always produce the same report.</p>
+  <details class="tpl"><summary>Reminder wording (three tones — edit freely; a broken placeholder is refused, never guessed)</summary>
+    <label for="tplg">Gentle — subject on the first line, body after a blank line</label><textarea id="tplg" spellcheck="false"></textarea>
+    <label for="tplf">Firm</label><textarea id="tplf" spellcheck="false"></textarea>
+    <label for="tplx">Final notice</label><textarea id="tplx" spellcheck="false"></textarea>
+  </details>
+  <p><button id="run">Run the chaser</button></p>
+  <div id="error"></div>
+  <div id="banner"></div>
+
+  <div id="results">
+    <h2>3 · Where the money is</h2>
+    <div class="tiles">
+      <div class="tile"><div class="k">Outstanding</div><div class="v" id="t_out"></div></div>
+      <div class="tile warn"><div class="k">Past due</div><div class="v" id="t_over"></div></div>
+      <div class="tile ok"><div class="k">Not yet due</div><div class="v" id="t_nyd"></div></div>
+    </div>
+    <h2>Aging</h2>
+    <table id="aging"><thead><tr><th>Bucket</th><th class="num">Amount</th></tr></thead><tbody></tbody></table>
+    <div class="recline" id="recline"></div>
+    <h2>Who to chase, in order</h2>
+    <table id="chase"><thead><tr><th>Client</th><th>Tone</th><th class="num">Days late (oldest)</th>
+      <th class="num">Invoices</th><th class="num">Balance</th></tr></thead><tbody></tbody></table>
+    <h2>The emails — written, not sent</h2>
+    <div id="emails"></div>
+    <h2>Exceptions — refused out loud, never guessed</h2>
+    <div class="exc"><ul id="refused"></ul></div>
+    <h2>Flags</h2>
+    <div class="exc"><ul id="flags"></ul></div>
+  </div>
+</main>
+<footer>Built on the Build It With AI channel. Before anything is shown, the page re-adds its own aging
+table to the outstanding total, traces every dollar figure in every email back to your ledger, and
+refuses the lot if one number cannot be traced. It drafts reminders; it never sends anything.</footer>
+<script>
+/* The Invoice Chaser — final engine. Implements SPEC.md exactly. No network, no clock:
+   asOf comes in through opts, always. (c) sample build for the Build It With AI giveaway. */
+(function (root) {
+  "use strict";
+
+  // ---------- CSV (RFC-4180-ish) ----------
+  function parseCsv(text) {
+    const rows = []; let row = [], field = "", inQ = false, i = 0;
+    const push = () => { row.push(field); field = ""; };
+    const endRow = () => { if (row.length > 1 || row[0].trim() !== "") rows.push(row); row = []; };
+    text = String(text).replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    while (i < text.length) {
+      const c = text[i];
+      if (inQ) {
+        if (c === '"') { if (text[i + 1] === '"') { field += '"'; i += 2; continue; } inQ = false; i++; continue; }
+        field += c; i++; continue;
+      }
+      if (c === '"' && field.trim() === "") { inQ = true; field = ""; i++; continue; }
+      if (c === ",") { push(); i++; continue; }
+      if (c === "\n") { push(); endRow(); i++; continue; }
+      field += c; i++;
+    }
+    push(); endRow();
+    return rows.map(r => r.map(f => f.trim()));
+  }
+
+  // ---------- money / dates ----------
+  function parseCents(s) {
+    const t = String(s).replace(/[$\s,]/g, "");
+    if (!/^-?\d+(\.\d{1,2})?$/.test(t)) return null;
+    const neg = t.startsWith("-"); const u = neg ? t.slice(1) : t;
+    const [d, f = ""] = u.split(".");
+    const c = parseInt(d, 10) * 100 + (f ? parseInt(f.padEnd(2, "0"), 10) : 0);
+    return neg ? -c : c;
+  }
+  function fmt(c) {
+    const neg = c < 0; const u = Math.abs(c);
+    const d = Math.floor(u / 100).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return (neg ? "-$" : "$") + d + "." + String(u % 100).padStart(2, "0");
+  }
+  function parseDate(s) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s).trim());
+    if (!m) return null;
+    const t = Date.UTC(+m[1], +m[2] - 1, +m[3]);
+    const d = new Date(t);
+    if (d.getUTCFullYear() !== +m[1] || d.getUTCMonth() !== +m[2] - 1 || d.getUTCDate() !== +m[3]) return null;
+    return t;
+  }
+  const DAY = 86400000;
+
+  // ---------- templates ----------
+  const LEADS = {
+    gentle: "Just a nudge — the balance below may already be on its way to us; if so, please ignore this note.",
+    firm: "The invoices below are now well past their due dates. Could you let us know when payment will be made?",
+    final: "Despite earlier reminders, the balance below remains unpaid. Please settle it, or call us today, to avoid this account being placed on hold."
+  };
+  const SUBJECTS = {
+    gentle: "A gentle reminder from {{business}} — {{total}} outstanding",
+    firm: "{{business}}: {{count}} invoice(s) now {{oldest_days}} days past due — {{total}}",
+    final: "Final notice from {{business}} — {{total}} must be settled"
+  };
+  function defaultTemplates() {
+    const body = tone => "Hi {{client}},\n\n" + LEADS[tone] +
+      "\n\n{{invoice_lines}}\n\nTotal outstanding: {{total}}\n\nReply to {{replyTo}} if anything above looks wrong.\n{{business}}";
+    return {
+      gentle: { subject: SUBJECTS.gentle, body: body("gentle") },
+      firm: { subject: SUBJECTS.firm, body: body("firm") },
+      final: { subject: SUBJECTS.final, body: body("final") }
+    };
+  }
+
+  function build(invoicesCsv, paymentsCsv, opts) {
+    opts = opts || {};
+    const asOfT = parseDate(opts.asOf);
+    if (asOfT === null) throw new Error("asOf (YYYY-MM-DD) is required — this tool never reads the clock");
+    const grace = Number.isInteger(opts.graceDays) ? opts.graceDays : 0;
+    const t1 = Number.isInteger(opts.toneGentleMax) ? opts.toneGentleMax : 14;
+    const t2 = Number.isInteger(opts.toneFirmMax) ? opts.toneFirmMax : 45;
+    const business = opts.business || "Bentwood Joinery";
+    const replyTo = opts.replyTo || "accounts@example.com";
+    const templates = opts.templates || defaultTemplates();
+
+    const refused = [];
+    // ---------- invoices ----------
+    const irows = parseCsv(invoicesCsv);
+    const ihdr = irows.shift() || [];
+    const icol = {}; ihdr.forEach((h, k) => icol[h.toLowerCase()] = k);
+    for (const need of ["invoice", "client", "email", "issued", "due", "amount", "status"])
+      if (!(need in icol)) throw new Error("invoices.csv is missing column: " + need);
+    const invoices = new Map();
+    irows.forEach((r, idx) => {
+      const row = idx + 2;
+      const id = (r[icol.invoice] || "").trim(), client = (r[icol.client] || "").trim();
+      const reasons = [];
+      if (!id) { refused.push({ kind: "invoice", row, id: "(blank)", reason: "invoice id empty" }); return; }
+      if (invoices.has(id)) { refused.push({ kind: "invoice", row, id, reason: "duplicate invoice id " + id + " — first row kept, this one refused" }); return; }
+      if (!client) reasons.push("client empty");
+      const amountC = parseCents(r[icol.amount]);
+      if (amountC === null || amountC <= 0) reasons.push('amount unreadable: "' + (r[icol.amount] || "") + '"');
+      const issuedT = parseDate(r[icol.issued]);
+      if (issuedT === null) reasons.push('issued date unreadable: "' + (r[icol.issued] || "") + '"');
+      const dueT = parseDate(r[icol.due]);
+      if (dueT === null) reasons.push('due date unreadable: "' + (r[icol.due] || "") + '"');
+      if (reasons.length) { refused.push({ kind: "invoice", row, id, reason: reasons.join("; ") }); return; }
+      invoices.set(id, {
+        id, client, email: (r[icol.email] || "").trim(), issued: r[icol.issued].trim(),
+        due: r[icol.due].trim(), issuedT, dueT, amountC, status: (r[icol.status] || "").trim().toLowerCase(), paidC: 0
+      });
+    });
+
+    // ---------- payments ----------
+    const prows = parseCsv(paymentsCsv);
+    const phdr = prows.shift() || [];
+    const pcol = {}; phdr.forEach((h, k) => pcol[h.toLowerCase()] = k);
+    for (const need of ["date", "invoice", "client", "amount"])
+      if (!(need in pcol)) throw new Error("payments.csv is missing column: " + need);
+    let paymentsApplied = 0;
+    prows.forEach((r, idx) => {
+      const row = idx + 2;
+      const id = (r[pcol.invoice] || "").trim();
+      const reasons = [];
+      const amountC = parseCents(r[pcol.amount]);
+      if (amountC === null || amountC <= 0) reasons.push('amount unreadable: "' + (r[pcol.amount] || "") + '"');
+      if (parseDate(r[pcol.date]) === null) reasons.push('date unreadable: "' + (r[pcol.date] || "") + '"');
+      if (!id) reasons.push("invoice id empty");
+      else if (!reasons.length && !invoices.has(id)) reasons.push("payment references no invoice: " + id);
+      if (reasons.length) { refused.push({ kind: "payment", row, id: id || "(blank)", reason: reasons.join("; ") }); return; }
+      invoices.get(id).paidC += amountC; paymentsApplied++;
+    });
+
+    // ---------- balances / buckets ----------
+    const credits = [], statusLies = [], buckets = [];
+    let outstandingC = 0, overdueC = 0, notYetDueC = 0;
+    const bC = [0, 0, 0, 0];
+    const outstanding = [];
+    for (const inv of invoices.values()) {
+      inv.balanceC = inv.amountC - inv.paidC;
+      inv.days = Math.floor((asOfT - inv.dueT) / DAY);
+      if (inv.balanceC < 0) { credits.push({ id: inv.id, client: inv.client, creditC: -inv.balanceC }); continue; }
+      if (inv.balanceC === 0) continue;
+      if (inv.status === "paid") statusLies.push({ id: inv.id, client: inv.client, balanceC: inv.balanceC });
+      outstanding.push(inv); outstandingC += inv.balanceC;
+      if (inv.days <= 0) { notYetDueC += inv.balanceC; buckets.push({ id: inv.id, client: inv.client, days: inv.days, balanceC: inv.balanceC, bucket: "not yet due" }); continue; }
+      overdueC += inv.balanceC;
+      const b = inv.days <= 30 ? 0 : inv.days <= 60 ? 1 : inv.days <= 90 ? 2 : 3;
+      bC[b] += inv.balanceC;
+      buckets.push({ id: inv.id, client: inv.client, days: inv.days, balanceC: inv.balanceC, bucket: ["1–30", "31–60", "61–90", "90+"][b] });
+    }
+    buckets.sort((a, b2) => a.id < b2.id ? -1 : a.id > b2.id ? 1 : 0);
+    credits.sort((a, b2) => a.id < b2.id ? -1 : 1);
+    statusLies.sort((a, b2) => a.id < b2.id ? -1 : 1);
+
+    // ---------- chase ----------
+    const byClient = new Map();
+    for (const inv of outstanding) {
+      if (inv.days <= grace) continue;
+      if (!byClient.has(inv.client)) byClient.set(inv.client, []);
+      byClient.get(inv.client).push(inv);
+    }
+    const chase = [];
+    for (const [client, list] of byClient) {
+      list.sort((a, b2) => a.dueT - b2.dueT || (a.id < b2.id ? -1 : 1));
+      const maxDays = Math.max(...list.map(x => x.days));
+      const totalC = list.reduce((s, x) => s + x.balanceC, 0);
+      const tone = maxDays <= t1 ? "gentle" : maxDays <= t2 ? "firm" : "final";
+      // email address: most recently issued accepted invoice of this client
+      let emailAddr = "", bestT = -Infinity;
+      for (const inv of invoices.values()) if (inv.client === client && inv.issuedT > bestT) { bestT = inv.issuedT; emailAddr = inv.email; }
+      chase.push({ client, emailAddr, tone, maxDays, totalC, invoices: list.map(x => ({ id: x.id, issued: x.issued, due: x.due, days: x.days, balanceC: x.balanceC })) });
+    }
+    chase.sort((a, b2) => b2.maxDays - a.maxDays || b2.totalC - a.totalC || (a.client < b2.client ? -1 : 1));
+
+    // ---------- render + audit ----------
+    function render(t, vars) { return t.replace(/\{\{(\w+)\}\}/g, (m, k) => (k in vars ? vars[k] : m)); }
+    const emails = [];
+    for (const c of chase) {
+      const lines = c.invoices.map(x => "- " + x.id + " · issued " + x.issued + " · due " + x.due + " · " + x.days + " days past due · balance " + fmt(x.balanceC)).join("\n");
+      const vars = { client: c.client, business, replyTo, count: String(c.invoices.length), total: fmt(c.totalC), invoice_lines: lines, oldest_days: String(c.maxDays) };
+      const tpl = templates[c.tone] || defaultTemplates()[c.tone];
+      emails.push({ client: c.client, tone: c.tone, to: c.emailAddr, subject: render(tpl.subject, vars), body: render(tpl.body, vars) });
+    }
+    // audit
+    let placeholdersOk = true, traceOk = true, creditsClean = true;
+    const banners = [];
+    const settledIds = [...invoices.values()].filter(x => x.balanceC <= 0).map(x => x.id);
+    for (let k = 0; k < emails.length; k++) {
+      const e = emails[k], c = chase[k];
+      const text = e.subject + "\n" + e.body;
+      if (/\{\{|\}\}/.test(text)) { placeholdersOk = false; const m = text.match(/\{\{\w+\}\}|\{\{|\}\}/); banners.push("unresolved placeholder " + (m ? m[0] : "{{…}}") + " in the " + e.tone + " template"); }
+      const found = (text.match(/-?\$[\d,]+\.\d{2}/g) || []).map(s => parseCents(s)).sort((a, b2) => a - b2);
+      const expect = c.invoices.map(x => x.balanceC).concat([c.totalC, c.totalC]).sort((a, b2) => a - b2);
+      c.amounts = found;
+      if (JSON.stringify(found) !== JSON.stringify(expect)) { traceOk = false; banners.push("an amount in the " + e.client + " email does not trace to the ledger"); }
+      for (const sid of settledIds) if (text.includes(sid)) { creditsClean = false; banners.push("settled invoice " + sid + " named in an email"); }
+    }
+    const bucketsTie = notYetDueC + bC[0] + bC[1] + bC[2] + bC[3] === outstandingC;
+    if (!bucketsTie) banners.push("aging buckets do not re-add to the outstanding total");
+    const chasedIds = new Set(chase.flatMap(c => c.invoices.map(x => x.id)));
+    const mustChase = outstanding.filter(x => x.days > grace).map(x => x.id);
+    const chaseCover = mustChase.every(id => chasedIds.has(id)) && chasedIds.size === mustChase.length;
+    if (!chaseCover) banners.push("an overdue invoice is missing from the chase list");
+    const trusted = placeholdersOk && traceOk && creditsClean && bucketsTie && chaseCover;
+    const banner = trusted ? "" : "DO NOT TRUST THESE REMINDERS — " + banners.join("; ");
+
+    return {
+      counts: {
+        invoiceRows: irows.length, paymentRows: prows.length,
+        invoicesAccepted: invoices.size, paymentsApplied,
+        refusedInvoices: refused.filter(x => x.kind === "invoice").length,
+        refusedPayments: refused.filter(x => x.kind === "payment").length,
+        outstandingInvoices: outstanding.length,
+        overdueInvoices: outstanding.filter(x => x.days >= 1).length,
+        chaseClients: chase.length, emails: trusted ? emails.length : 0
+      },
+      money: { outstandingC, overdueC, notYetDueC, b1C: bC[0], b2C: bC[1], b3C: bC[2], b4C: bC[3] },
+      buckets, refused, credits, statusLies,
+      chase: chase.map(c => ({ client: c.client, emailAddr: c.emailAddr, tone: c.tone, maxDays: c.maxDays, totalC: c.totalC, invoices: c.invoices, amounts: c.amounts })),
+      emails: trusted ? emails : [],
+      recon: { bucketsTie, chaseCover, traceOk, placeholdersOk, creditsClean, trusted, banner }
+    };
+  }
+
+  const IC = { build, parseCents, fmt, parseCsv, defaultTemplates };
+  if (typeof module !== "undefined" && module.exports) module.exports = { IC };
+  root.IC = IC;
+})(typeof window !== "undefined" ? window : globalThis);
+
+</script>
+<script>
+(function(){
+"use strict";
+var $=function(id){return document.getElementById(id)};
+var SAMPLE_INV="invoice,client,email,issued,due,amount,status\nINV-2031,Tovah Lindqvist,tovah@example.com,2026-07-06,2026-07-20,3840.00,sent\nINV-2032,Dez Okafor,dez@example.com,2026-07-14,2026-07-28,1260.00,paid\nINV-2033,Harbor & Vale Cafe,bookings@example.com,2026-07-21,2026-08-04,5900.00,sent\nINV-2034,Pell Street Dental,frontdesk@example.com,2026-08-03,2026-08-17,2418.00,sent\nINV-2035,Aldous Brecht,aldous@example.com,2026-07-10,2026-07-24,2205.00,sent\nINV-2036,Wilder Moss Interiors,studio@example.com,2026-08-20,2026-09-03,940.00,paid\nINV-2037,Dez Okafor,dez@example.com,2026-08-24,2026-09-07,2210.00,sent\nINV-2038,Tovah Lindqvist,tovah@example.com,2026-08-31,2026-09-14,4480.00,sent\nINV-2040,Quill & Fern Stationers,shop@example.com,2026-09-19,2026-10-03,1284.00,sent\nINV-2041,Maren Castellano,maren@example.com,2026-09-02,2026-09-16,6480.00,sent\nINV-2042,Harbor & Vale Cafe,bookings@example.com,2026-09-23,2026-10-07,3150.00,sent\nINV-2042,Harbor & Vale Cafe,bookings@example.com,2026-09-23,2026-10-07,3150.00,sent\nINV-2043,Pell Street Dental,frontdesk@example.com,2026-09-26,2026-10-10,880.00,sent\nINV-2044,Soren Byquist,soren@example.com,2026-09-28,2026-10-12,620.00,sent\nINV-2045,Odile Ferrante,odile@example.com,2026-09-30,2026-10-14,2760.00,sent\nINV-2046,Beckett Lane Realty,office@example.com,2026-10-01,2026-10-15,1590.00,sent\nINV-2047,Dez Okafor,dez@example.com,2026-10-05,2026-10-19,3420.00,sent\nINV-2048,Tovah Lindqvist,tovah@example.com,2026-10-07,2026-10-21,2980.00,sent\nINV-2049,Harrow Hill Brewing,taproom@example.com,2026-10-08,2026-10-22,\"2,450.00\",sent\nINV-2050,Pell Street Dental,frontdesk@example.com,2026-10-12,2026-10-26,1140.00,sent\nINV-2051,Odile Ferrante,odile@example.com,2026-10-14,2026-10-28,760.00,sent\nINV-2052,Juno Applegate Photography,juno@example.com,2026-10-16,2026-10-30,980.00,sent\nINV-2053,Calder Wick Candle Co.,orders@example.com,2026-10-18,on receipt,1675.00,sent\nINV-2054,Beckett Lane Realty,office@example.com,2026-10-20,2026-11-03,2340.00,sent\nINV-2055,Soren Byquist,soren@example.com,2026-10-22,2026-11-05,1870.00,sent\nINV-2056,Harbor & Vale Cafe,bookings@example.com,2026-10-24,2026-11-07,4120.00,sent\nINV-2057,Maren Castellano,maren@example.com,2026-10-11,2026-10-25,1120.00,sent\nINV-2058,Quill & Fern Stationers,shop@example.com,2026-10-26,2026-11-09,1510.00,sent\n";
+var SAMPLE_PAY="date,invoice,client,amount\n2026-07-28,INV-2031,Tovah Lindqvist,2000.00\n2026-07-30,INV-2032,Dez Okafor,1260.00\n2026-08-02,INV-2031,Tovah Lindqvist,1840.00\n2026-08-21,INV-2033,Harbor & Vale Cafe,5900.00\n2026-09-20,INV-2038,Tovah Lindqvist,4480.00\n2026-09-28,INV-2037,Dez Okafor,1000.00\n2026-10-12,INV-2043,Pell Street Dental,880.00\n2026-10-14,INV-2044,Soren Byquist,700.00\n2026-10-20,INV-2046,Beckett Lane Realty,1590.00\n2026-10-24,INV-2057,Maren Castellano,1120.00\n2026-10-29,INV-2051,Odile Ferrante,760.00\n2026-10-30,INV-2099,Harrow Hill Brewing,450.00\n";
+function tplFill(){
+  var t=IC.defaultTemplates();
+  $("tplg").value=t.gentle.subject+"\n\n"+t.gentle.body;
+  $("tplf").value=t.firm.subject+"\n\n"+t.firm.body;
+  $("tplx").value=t.final.subject+"\n\n"+t.final.body;
+}
+tplFill();
+$("loadSample").addEventListener("click",function(){
+  $("inv").value=SAMPLE_INV;$("pay").value=SAMPLE_PAY;$("asof").value="2026-11-02";
+});
+function tplOf(id){
+  var v=$(id).value;var cut=v.indexOf("\n\n");
+  if(cut<0)return{subject:v.trim(),body:""};
+  return{subject:v.slice(0,cut).trim(),body:v.slice(cut+2)};
+}
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+$("run").addEventListener("click",function(){
+  $("error").style.display="none";$("banner").style.display="none";$("results").style.display="none";
+  var asof=$("asof").value.trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(asof)){
+    $("error").textContent="Set the books' as-of date (YYYY-MM-DD) first — this tool never guesses the date from your computer's clock.";
+    $("error").style.display="block";return;
+  }
+  var R;
+  try{
+    R=IC.build($("inv").value,$("pay").value,{
+      asOf:asof,
+      graceDays:parseInt($("grace").value,10)||0,
+      toneGentleMax:parseInt($("t1").value,10)||14,
+      toneFirmMax:parseInt($("t2").value,10)||45,
+      business:$("biz").value.trim()||"Your business",
+      replyTo:$("reply").value.trim()||"you@example.com",
+      templates:{gentle:tplOf("tplg"),firm:tplOf("tplf"),final:tplOf("tplx")}
+    });
+  }catch(e){$("error").textContent=String(e.message||e);$("error").style.display="block";return;}
+  window.__lastRun=R;
+  if(!R.recon.trusted){
+    $("banner").textContent=R.recon.banner+"\n\nEvery email has been withheld. Fix the issue above and run again — this page refuses to show a number it cannot trace.";
+    $("banner").style.display="block";
+  }
+  $("results").style.display="block";
+  $("t_out").textContent=IC.fmt(R.money.outstandingC);
+  $("t_over").textContent=IC.fmt(R.money.overdueC);
+  $("t_nyd").textContent=IC.fmt(R.money.notYetDueC);
+  var tb=$("aging").tBodies[0];tb.innerHTML="";
+  [["Not yet due",R.money.notYetDueC],["1–30 days",R.money.b1C],["31–60 days",R.money.b2C],
+   ["61–90 days",R.money.b3C],["90+ days",R.money.b4C]].forEach(function(r){
+    tb.insertAdjacentHTML("beforeend","<tr><td>"+r[0]+"</td><td class=num>"+IC.fmt(r[1])+"</td></tr>");
+  });
+  var sum=R.money.notYetDueC+R.money.b1C+R.money.b2C+R.money.b3C+R.money.b4C;
+  $("recline").textContent=R.recon.bucketsTie
+    ?"✓ the five rows above re-add to the outstanding total, "+IC.fmt(sum)+", to the cent"
+    :"✗ the aging rows do NOT re-add to the outstanding total";
+  var cb=$("chase").tBodies[0];cb.innerHTML="";
+  R.chase.forEach(function(c){
+    cb.insertAdjacentHTML("beforeend","<tr><td>"+esc(c.client)+"</td><td><span class='tone "+c.tone+"'>"+c.tone+"</span></td>"+
+      "<td class=num>"+c.maxDays+"</td><td class=num>"+c.invoices.length+"</td><td class=num>"+IC.fmt(c.totalC)+"</td></tr>");
+  });
+  var em=$("emails");em.innerHTML="";
+  if(R.emails.length===0&&R.recon.trusted){em.innerHTML="<p>Nobody to chase — enjoy it.</p>";}
+  R.emails.forEach(function(e,i){
+    var mail="mailto:"+encodeURIComponent(e.to)+"?subject="+encodeURIComponent(e.subject)+"&body="+encodeURIComponent(e.body);
+    em.insertAdjacentHTML("beforeend","<div class=email><div class=sub>"+esc(e.subject)+"</div>"+
+      "<div class=meta>to "+esc(e.to)+" · <span class='tone "+e.tone+"'>"+e.tone+"</span></div>"+
+      "<pre>"+esc(e.body)+"</pre><a class=send href=\""+mail+"\">Open in your mail app</a>"+
+      "<button class=copy data-i="+i+">Copy</button></div>");
+  });
+  em.querySelectorAll("button.copy").forEach(function(b){
+    b.addEventListener("click",function(){
+      var e=R.emails[+b.getAttribute("data-i")];
+      var ta=document.createElement("textarea");ta.value="Subject: "+e.subject+"\n\n"+e.body;
+      document.body.appendChild(ta);ta.select();
+      try{document.execCommand("copy")}catch(err){}
+      document.body.removeChild(ta);b.textContent="Copied";setTimeout(function(){b.textContent="Copy"},1200);
+    });
+  });
+  var rf=$("refused");rf.innerHTML="";
+  if(!R.refused.length)rf.innerHTML="<li>Nothing refused — every row was readable.</li>";
+  R.refused.forEach(function(r){
+    rf.insertAdjacentHTML("beforeend","<li><b>"+esc(r.id)+"</b> ("+r.kind+" row "+r.row+") — <span class=why>"+esc(r.reason)+"</span></li>");
+  });
+  var fl=$("flags");fl.innerHTML="";
+  R.statusLies.forEach(function(s){
+    fl.insertAdjacentHTML("beforeend","<li><b>"+esc(s.id)+"</b> · "+esc(s.client)+" — the status column says paid, but no payment is on file; balance "+IC.fmt(s.balanceC)+" stays in the chase.</li>");
+  });
+  R.credits.forEach(function(c){
+    fl.insertAdjacentHTML("beforeend","<li><b>"+esc(c.id)+"</b> · "+esc(c.client)+" — overpaid by "+IC.fmt(c.creditC)+". That is a credit you owe them, not a balance to chase; no reminder was written.</li>");
+  });
+  if(!R.statusLies.length&&!R.credits.length)fl.innerHTML="<li>No flags on this run.</li>";
+});
+})();
+</script>
+</body>
+</html>

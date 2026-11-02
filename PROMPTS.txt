@@ -1,0 +1,52 @@
+THE INVOICE CHASER — the three prompts, exactly as used in the episode.
+Paste them into your AI assistant in order. Prompt 1 produces the first (broken) build.
+Prompt 2 and Prompt 3 are the corrections that turn it into the finished tool.
+
+================================ PROMPT 1 ================================
+Build me an invoice chaser as ONE html file I can open in a browser with the internet
+off. I will paste in two CSV lists my bookkeeping already keeps:
+
+invoices.csv — invoice, client, email, issued, due, amount, status
+payments.csv — date, invoice, client, amount
+
+Show me the total I'm owed, an aging table (not yet due, 1–30, 31–60, 61–90, 90+ days),
+and the list of who is late, in what order. For each late client, draft the reminder
+email for me — gentle if they're a little late, firm if it's been a while, a final
+notice if it's been very long — ready to open in my own mail app. Nothing uploads
+anywhere; the page must work offline.
+
+================================ PROMPT 2 ================================
+The first build hid most of my overdue money. Four corrections, and they are rules,
+not suggestions:
+
+- A payment binds to an INVOICE NUMBER, never to a client name. A client paying one
+  invoice says nothing about their other invoices.
+- An invoice's balance is computed: amount billed minus payments received against that
+  invoice id. The status column is never used for arithmetic — treat it as a rumor.
+- Parse the CSV properly: a quoted field may contain commas ("2,450.00" is an amount,
+  not two fields).
+- Any row you cannot read — an amount or a date that isn't one, a duplicate invoice id,
+  a payment pointing at an invoice that doesn't exist — is REFUSED out loud, listed
+  with its row number and the reason, never guessed at and never dropped in silence.
+
+================================ PROMPT 3 ================================
+Now make it impossible for this page to lie to me:
+
+- All money is carried as whole cents, with one written rounding rule, and rendered by
+  one formatter.
+- The books' as-of date is typed into a settings box. Never read the machine clock:
+  the same books must produce the same report on any day they are opened.
+- Every overdue invoice belongs to exactly ONE aging bucket (1–30, 31–60, 61–90, 90+ —
+  day 30 is 1–30, day 31 is 31–60), and the five aging rows must re-total to the
+  outstanding figure to the cent before anything renders.
+- An overpayment is a CREDIT: flag it, show what I owe them back, and never write a
+  reminder for it.
+- A status that says "paid" while money is still owed is flagged as a disagreement, and
+  the invoice stays in the chase.
+- Audit every run: every dollar figure inside every drafted email must trace back to
+  the ledger, every overdue invoice must appear in exactly one email, and no settled
+  invoice may be named in any email. If one check fails, withhold ALL the emails and
+  print DO NOT TRUST THESE REMINDERS with the reason.
+- Settings I can change, and each must visibly change the output: as-of date, grace
+  days, the two tone thresholds, my business name, my reply-to address, and the wording
+  of all three reminder templates.
